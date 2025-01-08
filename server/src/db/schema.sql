@@ -304,9 +304,10 @@ CREATE TRIGGER update_work_units_timestamp
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
 
--- Add complexity column if it doesn't exist
+-- Add complexity column and its index
 DO $$
 BEGIN
+    -- First add the column if it doesn't exist
     IF NOT EXISTS (
         SELECT 1
         FROM information_schema.columns
@@ -329,4 +330,23 @@ CREATE INDEX IF NOT EXISTS idx_questions_flow ON questions(flow_id);
 CREATE INDEX IF NOT EXISTS idx_template_nodes_template ON template_nodes(template_id);
 CREATE INDEX IF NOT EXISTS idx_templates_active ON templates(is_active);
 CREATE INDEX IF NOT EXISTS idx_work_units_node ON work_units(node_id);
-CREATE INDEX IF NOT EXISTS idx_templates_complexity ON templates(complexity); 
+
+-- Create complexity index after ensuring column exists
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'templates'
+        AND column_name = 'complexity'
+    ) THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM pg_indexes
+            WHERE tablename = 'templates'
+            AND indexname = 'idx_templates_complexity'
+        ) THEN
+            CREATE INDEX idx_templates_complexity ON templates(complexity);
+        END IF;
+    END IF;
+END $$; 
