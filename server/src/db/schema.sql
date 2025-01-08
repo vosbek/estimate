@@ -157,6 +157,7 @@ CREATE TABLE IF NOT EXISTS templates (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category template_category NOT NULL,
+    complexity INTEGER DEFAULT 1,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -252,4 +253,5 @@ CREATE INDEX IF NOT EXISTS idx_question_impacts_question ON question_impacts(que
 CREATE INDEX IF NOT EXISTS idx_questions_flow ON questions(flow_id);
 CREATE INDEX IF NOT EXISTS idx_template_nodes_template ON template_nodes(template_id);
 CREATE INDEX IF NOT EXISTS idx_templates_active ON templates(is_active);
-CREATE INDEX IF NOT EXISTS idx_work_units_node ON work_units(node_id); 
+CREATE INDEX IF NOT EXISTS idx_work_units_node ON work_units(node_id);
+CREATE INDEX IF NOT EXISTS idx_templates_complexity ON templates(complexity); 
