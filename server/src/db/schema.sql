@@ -172,46 +172,108 @@ CREATE TABLE IF NOT EXISTS work_units (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add foreign key constraints
-ALTER TABLE completed_intakes
-    ADD CONSTRAINT fk_completed_intakes_entry_point FOREIGN KEY (entry_point_id) REFERENCES entry_points(id),
-    ADD CONSTRAINT fk_completed_intakes_template FOREIGN KEY (template_id) REFERENCES templates(id);
+-- Add foreign key constraints if they don't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_completed_intakes_entry_point') THEN
+        ALTER TABLE completed_intakes
+            ADD CONSTRAINT fk_completed_intakes_entry_point FOREIGN KEY (entry_point_id) REFERENCES entry_points(id);
+    END IF;
 
-ALTER TABLE entry_points
-    ADD CONSTRAINT fk_entry_points_template FOREIGN KEY (template_id) REFERENCES templates(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_completed_intakes_template') THEN
+        ALTER TABLE completed_intakes
+            ADD CONSTRAINT fk_completed_intakes_template FOREIGN KEY (template_id) REFERENCES templates(id);
+    END IF;
 
-ALTER TABLE estimation_answers
-    ADD CONSTRAINT fk_estimation_answers_result FOREIGN KEY (result_id) REFERENCES estimation_results(id),
-    ADD CONSTRAINT fk_estimation_answers_question FOREIGN KEY (question_id) REFERENCES questions(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_entry_points_template') THEN
+        ALTER TABLE entry_points
+            ADD CONSTRAINT fk_entry_points_template FOREIGN KEY (template_id) REFERENCES templates(id);
+    END IF;
 
-ALTER TABLE estimation_team_hours
-    ADD CONSTRAINT fk_estimation_team_hours_result FOREIGN KEY (result_id) REFERENCES estimation_results(id),
-    ADD CONSTRAINT fk_estimation_team_hours_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_estimation_answers_result') THEN
+        ALTER TABLE estimation_answers
+            ADD CONSTRAINT fk_estimation_answers_result FOREIGN KEY (result_id) REFERENCES estimation_results(id);
+    END IF;
 
-ALTER TABLE node_options
-    ADD CONSTRAINT fk_node_options_node FOREIGN KEY (node_id) REFERENCES template_nodes(id),
-    ADD CONSTRAINT fk_node_options_next_node FOREIGN KEY (next_node_id) REFERENCES template_nodes(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_estimation_answers_question') THEN
+        ALTER TABLE estimation_answers
+            ADD CONSTRAINT fk_estimation_answers_question FOREIGN KEY (question_id) REFERENCES questions(id);
+    END IF;
 
-ALTER TABLE question_impacts
-    ADD CONSTRAINT fk_question_impacts_question FOREIGN KEY (question_id) REFERENCES questions(id),
-    ADD CONSTRAINT fk_question_impacts_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_estimation_team_hours_result') THEN
+        ALTER TABLE estimation_team_hours
+            ADD CONSTRAINT fk_estimation_team_hours_result FOREIGN KEY (result_id) REFERENCES estimation_results(id);
+    END IF;
 
-ALTER TABLE questions
-    ADD CONSTRAINT fk_questions_flow FOREIGN KEY (flow_id) REFERENCES estimation_flows(id),
-    ADD CONSTRAINT fk_questions_depends_on FOREIGN KEY (depends_on_question_id) REFERENCES questions(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_estimation_team_hours_team') THEN
+        ALTER TABLE estimation_team_hours
+            ADD CONSTRAINT fk_estimation_team_hours_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    END IF;
 
-ALTER TABLE team_multipliers
-    ADD CONSTRAINT fk_team_multipliers_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_node_options_node') THEN
+        ALTER TABLE node_options
+            ADD CONSTRAINT fk_node_options_node FOREIGN KEY (node_id) REFERENCES template_nodes(id);
+    END IF;
 
-ALTER TABLE template_nodes
-    ADD CONSTRAINT fk_template_nodes_template FOREIGN KEY (template_id) REFERENCES templates(id),
-    ADD CONSTRAINT fk_template_nodes_parent FOREIGN KEY (parent_id) REFERENCES template_nodes(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_node_options_next_node') THEN
+        ALTER TABLE node_options
+            ADD CONSTRAINT fk_node_options_next_node FOREIGN KEY (next_node_id) REFERENCES template_nodes(id);
+    END IF;
 
-ALTER TABLE work_units
-    ADD CONSTRAINT fk_work_units_node FOREIGN KEY (node_id) REFERENCES template_nodes(id),
-    ADD CONSTRAINT fk_work_units_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_question_impacts_question') THEN
+        ALTER TABLE question_impacts
+            ADD CONSTRAINT fk_question_impacts_question FOREIGN KEY (question_id) REFERENCES questions(id);
+    END IF;
 
--- Create triggers for timestamp updates
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_question_impacts_team') THEN
+        ALTER TABLE question_impacts
+            ADD CONSTRAINT fk_question_impacts_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_questions_flow') THEN
+        ALTER TABLE questions
+            ADD CONSTRAINT fk_questions_flow FOREIGN KEY (flow_id) REFERENCES estimation_flows(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_questions_depends_on') THEN
+        ALTER TABLE questions
+            ADD CONSTRAINT fk_questions_depends_on FOREIGN KEY (depends_on_question_id) REFERENCES questions(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_team_multipliers_team') THEN
+        ALTER TABLE team_multipliers
+            ADD CONSTRAINT fk_team_multipliers_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_template_nodes_template') THEN
+        ALTER TABLE template_nodes
+            ADD CONSTRAINT fk_template_nodes_template FOREIGN KEY (template_id) REFERENCES templates(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_template_nodes_parent') THEN
+        ALTER TABLE template_nodes
+            ADD CONSTRAINT fk_template_nodes_parent FOREIGN KEY (parent_id) REFERENCES template_nodes(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_work_units_node') THEN
+        ALTER TABLE work_units
+            ADD CONSTRAINT fk_work_units_node FOREIGN KEY (node_id) REFERENCES template_nodes(id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_work_units_team') THEN
+        ALTER TABLE work_units
+            ADD CONSTRAINT fk_work_units_team FOREIGN KEY (team_id) REFERENCES teams(id);
+    END IF;
+END $$;
+
+-- Create triggers for timestamp updates (dropping if they exist)
+DROP TRIGGER IF EXISTS update_completed_intakes_timestamp ON completed_intakes;
+DROP TRIGGER IF EXISTS update_entry_points_timestamp ON entry_points;
+DROP TRIGGER IF EXISTS update_node_options_timestamp ON node_options;
+DROP TRIGGER IF EXISTS update_template_nodes_timestamp ON template_nodes;
+DROP TRIGGER IF EXISTS update_templates_timestamp ON templates;
+DROP TRIGGER IF EXISTS update_work_units_timestamp ON work_units;
+
 CREATE TRIGGER update_completed_intakes_timestamp
     BEFORE UPDATE ON completed_intakes
     FOR EACH ROW
