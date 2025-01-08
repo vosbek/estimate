@@ -304,6 +304,19 @@ CREATE TRIGGER update_work_units_timestamp
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
 
+-- Add complexity column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'templates'
+        AND column_name = 'complexity'
+    ) THEN
+        ALTER TABLE templates ADD COLUMN complexity INTEGER DEFAULT 1;
+    END IF;
+END $$;
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_completed_intakes_template ON completed_intakes(template_id);
 CREATE INDEX IF NOT EXISTS idx_completed_intakes_entry_point ON completed_intakes(entry_point_id);
